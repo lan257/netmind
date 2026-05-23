@@ -1,0 +1,15 @@
+{
+  "skill_id": "tool_creation_guide",
+  "skill_name": "Tool 创建指南",
+  "description": "指导 Agent 创建 executable Tool；Tool 才能包含 run.py、参数、权限和运行时脚本。",
+  "trigger": "当用户要求创建可执行工具、封装文件操作、调用接口、运行脚本、返回结构化运行结果或新增可被 Agent 调用的动作能力时使用。",
+  "prompt": "创建 Tool 时只创建一个 Tool 文件夹，文件夹内准备 tool_definition.json、run.py、tool.md。Tool 定义必须声明 params、permission_level、permission_message、script_path；规范 script_path 指向对应 .tool/tools/<tool_id>/run.py。写入较长文本时使用 long_text_line_modifier_guide 分块批量写入。不要把可执行 Tool 做成 Skill。",
+  "workflow_path": "workflow.md",
+  "maintenance_path": "maintenance.md",
+  "category": "Tool管理",
+  "tags": [
+    "tool",
+    "创建",
+    "executable"
+  ]
+}

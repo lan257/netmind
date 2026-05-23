@@ -1,0 +1,26 @@
+{
+  "skill_id": "incremental_file_modifier",
+  "skill_name": "增量文件修改器",
+  "description": "仅允许在指定文件最后面进行增量添加文本，不修改已有内容",
+  "trigger": "当需要在文件末尾追加内容时使用",
+  "params": {
+    "file_path": {
+      "type": "string",
+      "description": "要修改的目标文件路径（绝对路径）"
+    },
+    "text": {
+      "type": "string",
+      "description": "要追加到文件末尾的文本内容"
+    }
+  },
+  "param_descriptions": {},
+  "permission_level": "none",
+  "permission_message": "",
+  "script_path": ".tool/tools/incremental_file_modifier/run.py",
+  "category": "文件操作",
+  "tags": [
+    "文件",
+    "追加",
+    "文本"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "skill_id": "tool_update_guide",
+  "skill_name": "Tool 修改指南",
+  "description": "指导 Agent 修改 executable Tool，并保持单个 Tool 文件夹内的定义、脚本、文档和权限一致。",
+  "trigger": "当用户要求修改已有 Tool 的功能、参数、权限、脚本逻辑、文档说明、分类或标签时使用。",
+  "prompt": "修改 Tool 时只维护一个 Tool 文件夹，先读取其中的 tool_definition.json、run.py、tool.md。参数、权限、文档和实现必须同步更新；写入较长文本时使用 long_text_line_modifier_guide 分块批量写入，不手动改 .tool 列表。不要把 prompt-only Skill 的 workflow 写进 Tool 作为替代实现。",
+  "workflow_path": "workflow.md",
+  "maintenance_path": "maintenance.md",
+  "category": "Tool管理",
+  "tags": [
+    "tool",
+    "修改",
+    "一致性校验"
+  ]
+}

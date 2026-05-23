@@ -1,0 +1,15 @@
+{
+  "skill_id": "skill_update_guide",
+  "skill_name": "Skill 修改指南",
+  "description": "指导 Agent 修改 prompt-only Skill，并校验单个 Skill 文件夹内的定义、流程和维护文档一致。",
+  "trigger": "当用户要求修改已有 Skill 的触发条件、提示、流程、维护说明、分类或标签时使用。",
+  "prompt": "修改 Skill 时只维护一个 Skill 文件夹，先读取其中的 skill_definition.json、workflow.md、maintenance.md。保持 Skill 为 prompt-only；如果变更引入可执行能力，应转入 Tool 修改或 Tool 创建。写入较长文本时使用 long_text_line_modifier_guide 分块批量写入，不手动改 .skill 列表。",
+  "workflow_path": "workflow.md",
+  "maintenance_path": "maintenance.md",
+  "category": "Skill管理",
+  "tags": [
+    "skill",
+    "修改",
+    "一致性校验"
+  ]
+}

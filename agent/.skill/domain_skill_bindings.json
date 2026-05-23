@@ -1,0 +1,9 @@
+{
+  "domain_skill_bindings": {
+    "default": "lists/default.yaml",
+    "skill": "lists/skill.yaml",
+    "developer": "lists/skill.yaml",
+    "admin": "lists/skill.yaml",
+    "netmind": "lists/netmind.yaml"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "skill_id": "long_text_line_modifier_guide",
+  "skill_name": "长文本分块文件编辑指南",
+  "description": "指导 Agent 在 line_modifier 单次写入受限时，把长文本写入或大段文件编辑拆成多次小块调用，并控制行号与校验。",
+  "trigger": "当需要用 line_modifier 写入超过单次 40 行或 4000 字符的长文本、批量编辑文件、分段追加内容或拆分大范围文件修改时使用。",
+  "prompt": "长文本文件编辑仍优先使用 line_modifier。先用 line_reader 获取目标范围和总行数，再把内容拆成每块目标范围、新内容均不超过 40 行且 new_content 不超过 4000 字符的 line_modifier 调用；行号能稳定推算时可在同一次 tool_call_drafts 中请求多次调用，插入或删除导致后续行号不确定时先执行前一批并重读锚点。不要因为内容很长改用整文件覆盖。",
+  "workflow_path": "workflow.md",
+  "maintenance_path": "maintenance.md",
+  "category": "文件操作",
+  "tags": [
+    "文件编辑",
+    "长文本",
+    "批量调用",
+    "line_modifier"
+  ]
+}
