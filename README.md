@@ -1,78 +1,120 @@
 # NetMind
 
-NetMind 是一个基于 AI 的知识网络构建与可视化工具，用于把文本、文档、需求和讨论内容整理成可维护的思维导图与知识图谱。它提供节点管理、关系管理、AI 结构化整理、上下文问答和 Agent 工具调用能力，适合用来沉淀项目知识、需求分析、产品方案和研发文档。
+NetMind 是一个面向个人和团队的 AI 知识网络工具。它把需求、文档、讨论记录、研究材料和项目知识沉淀为可维护的思维导图、知识卡片和节点关系图谱，并允许 AI Agent 在用户确认下规划和自动化完成复杂的知识整理工作。
 
-本仓库主要面向开发者，包含后端、前端、数据库脚本、文档和当前可运行的 Agent 脚本。普通用户建议使用发布页提供的安装包。
+这个开源版本的重点不是做一个普通画图工具，而是把“节点”作为可复用的知识单元：节点可以属于不同导图，可以互相关联，可以绑定一张可阅读的 Markdown 知识卡片，也可以被 Agent 检索、分析、重组并生成新的知识结构。
 
-## 当前状态
+## 核心差异
 
-- 后端、前端、数据库和 AI 基础功能已可本地运行。
-- AI Agent 已接入工具调用链路，可以调用大部分 NetMind 应用接口，包括导图、节点、节点关系、文件读取/增量写入等能力。
-- Agent 脚本已经放在仓库根目录的 `agent/` 下。运行应用时将 Agent 路径指向该目录即可。
-- `agent/` 目录当前作为应用运行时脚本随仓库提供，一般不需要修改。完整的 Agent 脚本开发项目后续会单独开源。
-- 写入、删除等高风险 Agent 工具会走确认流程；查询类工具默认可直接执行。
+### 1. 跨图节点关联与关系图谱
+
+NetMind 支持在不同思维导图之间建立节点关系。一个节点不只存在于当前导图的树形层级中，也可以和数据库里的任意节点形成“依赖、引用、补充、冲突、来源”等关系。
+
+- 关系图谱以当前节点为中心，展示直接关联节点和二级关联节点。
+- 跨图节点会带有所属导图信息，并支持跳转回原导图。
+- 编辑节点内容时可以全库搜索节点，并快速插入引用。
+- 关系数据独立持久化，适合把多个专题、项目、需求和文档串成知识网络。
+
+这让 NetMind 更适合长期知识积累，而不是一次性的导图绘制。
+
+### 2. 节点绑定知识卡片
+
+每个节点都可以绑定一张知识卡片。卡片内容使用 Markdown 表达，适合写需求背景、设计说明、接口约束、会议结论、任务拆解、引用材料和补充分析。
+
+当前知识卡片支持常用 Markdown 富文本展示能力，包括：
+
+- 标题、段落、列表、引用、分割线。
+- 加粗、斜体、删除线、行内代码。
+- 代码块、表格、外部链接。
+- `[[节点标题|节点ID]]` 形式的内部节点引用。
+- 卡片内直接查看节点关联图谱。
+
+导图负责结构，知识卡片负责内容，关系图谱负责跨主题连接。
+
+### 3. Agent 可组合能力管理整个导图应用
+
+NetMind 内置 Agent 运行链路。它的价值不只是“可以调用接口”，而是可以把导图、节点、关系、搜索和写入能力组合成完整工作流，自动规划并执行普通用户手动操作成本很高的复杂整理任务。
+
+例如：
+
+- 从一个节点出发，查询它的上下游关联节点和跨图引用，归纳主题边界，再创建一张新的思维导图来描述该节点相关的完整内容。
+- 围绕一个目标持续生成新节点、补充节点内容、建立节点关系，直到形成可阅读、可维护的目标导图。
+- 梳理整张思维导图后，规划重组方案，并通过移动子树、拆分节点、合并节点、调整关系等操作重构导图。
+- 对已有知识网络做批量整理，把原本需要个人反复查看、复制、修改的工作变成可确认、可追踪的 Agent 执行流程。
+
+这些自动化能力建立在基础工具之上：导图创建与更新、节点查询与搜索、节点创建与改写、节点关系创建与删除、文件读取与增量写入等。用户还可以新增自定义 Skill，把固定需求修改、导图重组规范、节点拆分规则、验收检查步骤沉淀为稳定流程，让 Agent 按明确步骤和约束执行，减少每次临场推理带来的偏差。
+
+写入、删除等高风险操作会进入确认流程；查询类工具默认可直接执行。它的目标是让 AI 能完整管理思维导图应用的工作过程，而不是只给出一段整理建议后让用户手动修改。
 
 ## 功能概览
 
-- AI 清洗：把自然语言、需求说明和文档片段整理成标准导图结构。
-- 需求结构化：基于上下文生成可导入、可编辑的知识节点。
-- 思维导图：创建、编辑、删除、导入、导出导图和节点。
-- 画布编辑：支持节点拖拽、缩放、平移、位置保存和视图切换。
-- 知识卡片：支持 Markdown 内容展示、节点预览和关联关系查看。
-- AI 问答：支持节点问答、全图问答、上下文问答、全局问答和应用帮助。
-- AI Agent：支持工具规划、权限确认、工具执行、上下文记忆和多轮继续执行。
-- 持久化存储：使用 PostgreSQL 保存导图、节点、关系和对话记录。
+- 思维导图管理：创建、编辑、删除、导入、导出导图。
+- 节点管理：树形节点、父子结构、排序、内容、画布位置保存。
+- 可视化画布：支持节点拖拽、缩放、平移、图视图和列表视图切换。
+- 跨图关系：支持任意节点之间建立关系，并在卡片和画布中查看。
+- 知识卡片：节点内容 Markdown 化，支持阅读、编辑、预览和内部引用。
+- AI 清洗：把自然语言、文档片段和需求说明整理为标准导图结构。
+- AI 问答：支持节点问答、全图问答、全局问答和应用帮助。
+- AI Agent：支持把基础应用能力组合为自动化工作流，完成导图生成、节点梳理、关系重建、结构重组和多轮执行。
+- 自定义 Skill：支持把高频、固定、容易出错的整理流程沉淀为可复用指令，约束 Agent 的步骤、范围和检查点。
+- 持久化存储：使用 PostgreSQL 保存导图、节点、关系和 AI 对话记录。
+- API 文档：后端提供 Swagger 页面，便于二次开发和集成。
 
-## Agent 能力
+## 适合用途
 
-当前仓库内置的 Agent 运行时位于：
+NetMind 适合用在需要长期积累、持续重组和反复追问的知识场景：
 
-```text
-agent/
-├── src/
-│   └── agent_kernel.py
-├── .tool/
-│   ├── domain_tool_bindings.json
-│   ├── lists/
-│   └── tools/
-└── .skill/
-    ├── domain_skill_bindings.json
-    ├── lists/
-    └── skills/
-```
+- 产品需求拆解与需求变更追踪。
+- 项目知识库、研发文档和接口说明沉淀。
+- 个人研究笔记、读书笔记、课程笔记。
+- 多项目、多专题之间的知识关联整理。
+- 让 AI 基于已有知识结构自动生成新导图、重组旧导图，并在确认后直接完成批量编辑。
 
-NetMind 后端通过 Python 启动 `agent/src/agent_kernel.py`，把当前问题、上下文、模型配置、工具权限结果和 NetMind API 地址传给 Agent。Agent 再根据 `.tool` 中的工具定义选择并执行工具。
+## 开源版定位
 
-当前 `netmind` 域已包含的主要工具类型：
+当前仓库面向开发者和自托管用户，包含：
 
-- 导图：创建、查询、列表、更新、删除、级联删除。
-- 节点：创建、查询、搜索、更新、删除子树、按导图列表查询。
-- 节点关系：创建、查询、按导图查询、按节点查询、删除。
-- 文件：读取文档、增量追加内容。
-- 通用：时间查询、目录/文件读取类工具。
+- .NET 8 后端 API。
+- Vue 3 前端应用。
+- PostgreSQL 初始化与迁移脚本。
+- AI Prompt 配置。
+- 当前可运行的 Agent 脚本与工具定义。
+- 自定义 Skill 定义与示例。
+- 项目说明文档。
 
-Agent 路径可以在前端「设置 → AgentBuild 脚本设置」中配置。对于本仓库源码运行，建议填写仓库内的 `agent` 绝对路径，例如：
-
-```text
-E:\Private\AAW+\NetMind\NetMind\agent
-```
-
-如果前端没有覆盖该路径，也可以在后端配置文件中调整 `AiAgent:AgentBuildPath`。
+`agent/` 目录目前作为运行时随仓库提供，一般只需要配置路径即可使用。除非正在调试 Agent 工具、权限或执行链路，通常不需要修改它。
 
 ## 技术栈
 
 | 层级 | 技术 |
 | --- | --- |
-| 后端 | .NET 8 Web API |
 | 前端 | Vue 3 + Vite + Element Plus |
+| 后端 | .NET 8 Web API |
 | 数据库 | PostgreSQL |
 | AI 模型 | DeepSeek Cloud / OpenAI-compatible Chat Completions / Ollama Local |
 | Agent 运行时 | Python 3.10+ |
 | Agent 工具 | `.tool` 工具定义 + Python 工具脚本 |
 
-> 注意：当前 Agent 模式仅支持 OpenAI-compatible Chat Completions 接口。Ollama 可用于普通 AI 清洗和问答；如果用于 Agent，需要确认接口兼容性。
+> Agent 模式当前要求模型接口兼容 OpenAI Chat Completions。Ollama 可用于普通 AI 清洗和问答；如果要用于 Agent，需要自行确认接口兼容性。
 
-## 开发环境
+## 目录结构
+
+| 路径 | 说明 |
+| --- | --- |
+| `agent/` | 当前可运行的 Agent 脚本、工具定义和工具脚本 |
+| `src/NetMind.sln` | .NET 解决方案入口 |
+| `src/NetMind.WebApi/` | 后端 Web API、配置、Swagger、Prompt 文件 |
+| `src/NetMind.Services/` | 业务逻辑、AI 清洗和 Agent 调用编排 |
+| `src/NetMind.Repository/` | PostgreSQL 数据访问 |
+| `src/NetMind.Models/` | DTO、实体和 ViewModel |
+| `src/NetMind.Common/` | 通用响应、日志抽象等公共能力 |
+| `src/NetMind.Frontend/` | Vue 3 前端项目 |
+| `文档/SQL/` | 数据库初始化和迁移脚本 |
+| `文档/项目/` | 项目结构、接口和研发说明 |
+
+## 本地运行
+
+### 环境要求
 
 请先安装：
 
@@ -82,9 +124,7 @@ E:\Private\AAW+\NetMind\NetMind\agent
 - Python 3.10+
 - 可选：Ollama，本地模型调试时使用
 
-## 本地启动
-
-### 1. 准备数据库
+### 1. 初始化数据库
 
 创建数据库：
 
@@ -98,68 +138,49 @@ CREATE DATABASE netmind;
 psql -h localhost -p 5432 -U postgres -d netmind -f "文档/SQL/Init.sql"
 ```
 
-如果需要从旧库升级，按文件名顺序执行 `文档/SQL/P*.sql` 迁移脚本。
+如果是从旧版本升级，按文件名顺序执行 `文档/SQL/P*.sql` 迁移脚本。
 
-运行后端前，通过 `PGSTR` 环境变量提供 PostgreSQL 连接字符串：
+### 2. 配置后端
 
-```powershell
-$env:PGSTR="Host=localhost;Port=5432;Database=netmind;Username=postgres;Password=your_password;"
+建议在 `src/NetMind.WebApi/` 下新建本地配置文件 `appsettings.Local.json`。该文件已被 `.gitignore` 忽略，不会提交到仓库。
+
+```json
+{
+  "ConnectionStrings": {
+    "Postgres": "Host=localhost;Port=5432;Database=netmind;Username=postgres;Password=your_password;"
+  },
+  "App": {
+    "BaseUrl": "http://127.0.0.1:5120"
+  },
+  "AiAgent": {
+    "AgentBuildPath": "../../agent"
+  }
+}
 ```
 
-### 2. 安装前端依赖
+也可以用环境变量覆盖数据库连接：
 
 ```powershell
-cd src\NetMind.Frontend
-npm install
-cd ..\..
+$env:ConnectionStrings__Postgres="Host=localhost;Port=5432;Database=netmind;Username=postgres;Password=your_password;"
 ```
 
-### 3. 配置 AI 模型
-
-使用 DeepSeek Cloud 时配置 API Key：
+### 3. 安装前端依赖
 
 ```powershell
-$env:DEEPSEEK_API_KEY="你的 DeepSeek API Key"
+npm install --prefix src\NetMind.Frontend
 ```
 
-也可以在前端「设置 → 内置模型 API Key」里为本机浏览器临时覆盖 Key。
-
-使用本地模型时，请先启动 Ollama，并确认 `src/NetMind.WebApi/appsettings*.json` 中配置的模型已在本机拉取。
-
-真实 API Key 不应写入仓库。开发时优先使用环境变量或前端本地设置。
-
-### 4. 配置 Agent
-
-确认本机可以运行 Python：
-
-```powershell
-py --version
-```
-
-如果没有 Windows Python Launcher，可改用 `python --version` 测试，并在后端配置中把 `AiAgent:PythonExecutable` 改为可执行文件名或 `python.exe` 绝对路径。
-
-将 Agent 根目录设置为仓库内的 `agent` 目录。可选方式：
-
-- 前端设置：打开「设置 → AgentBuild 脚本设置」，填写 `agent` 目录的绝对路径。
-- 后端配置：修改 `src/NetMind.WebApi/appsettings*.json` 中的 `AiAgent:AgentBuildPath`。
-
-### 5. 启动后端
+### 4. 启动应用
 
 ```powershell
 dotnet run --project src\NetMind.WebApi\NetMind.WebApi.csproj
 ```
 
-开发环境下，后端会尝试自动启动前端开发服务。默认访问地址：
+开发环境下，后端会尝试自动启动前端开发服务。
 
-```text
-http://localhost:5173
-```
-
-接口文档：
-
-```text
-http://localhost:5120/swagger
-```
+- 前端默认地址：`http://localhost:5173`
+- 后端默认地址：`http://127.0.0.1:5120`
+- Swagger：`http://127.0.0.1:5120/swagger`
 
 如果端口被占用，可以通过环境变量调整后端监听地址：
 
@@ -167,6 +188,35 @@ http://localhost:5120/swagger
 $env:ASPNETCORE_URLS="http://127.0.0.1:5119"
 dotnet run --project src\NetMind.WebApi\NetMind.WebApi.csproj
 ```
+
+### 5. 配置 AI 模型
+
+打开前端「设置 → AI 大模型配置」，选择或新增模型，并填写 API Key。
+
+默认配置包含：
+
+- DeepSeek Cloud：云端模型，适合 AI 清洗、问答和 Agent。
+- Ollama Local：本地模型，适合普通清洗和问答调试。
+
+API Key 会由前端加密后提交到后端，不建议写入配置文件或仓库。
+
+### 6. 配置 Agent
+
+确认 Python 可用：
+
+```powershell
+py --version
+```
+
+如果没有 Windows Python Launcher，可以使用 `python --version`，并在配置中把 `AiAgent:PythonExecutable` 改为 `python` 或 Python 可执行文件绝对路径。
+
+源码运行时，Agent 根目录建议指向仓库内的 `agent/`：
+
+```text
+E:\Private\AAW+\NetMind\NetMind\agent
+```
+
+可以在前端「设置 → AgentBuild 脚本设置」中覆盖该路径，也可以在 `appsettings.Local.json` 中配置 `AiAgent:AgentBuildPath`。
 
 ## 常用命令
 
@@ -188,58 +238,36 @@ npm run test --prefix src\NetMind.Frontend
 npm run build --prefix src\NetMind.Frontend
 ```
 
-## 目录说明
+后端发布：
 
-| 路径 | 说明 |
+```powershell
+dotnet publish src\NetMind.WebApi\NetMind.WebApi.csproj -c Release -o publish/netmind
+```
+
+## 主要接口
+
+| 能力 | 接口 |
 | --- | --- |
-| `agent/` | 当前可运行的 Agent 脚本、工具定义和工具脚本 |
-| `src/NetMind.sln` | .NET 解决方案入口 |
-| `src/NetMind.WebApi/` | 后端 Web API、配置、Swagger、Prompt 文件 |
-| `src/NetMind.Services/` | 业务逻辑和 AI/Agent 调用编排 |
-| `src/NetMind.Repository/` | PostgreSQL 数据访问 |
-| `src/NetMind.Models/` | DTO、实体和 ViewModel |
-| `src/NetMind.Common/` | 通用响应和日志抽象 |
-| `src/NetMind.Frontend/` | Vue 3 前端项目 |
-| `文档/SQL/` | 数据库初始化和迁移脚本 |
-| `文档/项目必读.md` | 项目文档入口 |
+| 健康检查 | `GET /api/system/health` |
+| 导图 | `GET/POST/PUT/DELETE /api/mind-maps` |
+| 节点 | `GET/POST/PUT/DELETE /api/nodes` |
+| 节点搜索 | `GET /api/nodes/search` |
+| 节点关系 | `GET/POST/PUT/DELETE /api/node-relations` |
+| 导入导出 | `/api/mind-map-transfer/*` |
+| AI 清洗与问答 | `/api/ai/*` |
+| AI 对话记录 | `/api/ai-conversation-records` |
 
-## 配置说明
-
-主要配置文件：
-
-- `src/NetMind.WebApi/appsettings.json`
-- `src/NetMind.WebApi/appsettings.Development.json`
-
-常用环境变量：
-
-| 变量 | 说明 |
-| --- | --- |
-| `PGSTR` | PostgreSQL 完整连接字符串，后端运行必需 |
-| `DEEPSEEK_API_KEY` | DeepSeek Cloud API Key，使用 DeepSeek 时需要 |
-| `ASPNETCORE_URLS` | 可选，覆盖后端监听地址 |
-
-常用 Agent 配置：
-
-| 配置项 | 说明 |
-| --- | --- |
-| `AiAgent:AgentBuildPath` | Agent 根目录，源码运行建议指向仓库内 `agent/` |
-| `AiAgent:PythonExecutable` | Python 启动命令，默认 `py` |
-| `AiAgent:TimeoutSeconds` | Agent 单轮执行超时时间 |
-| `AiAgent:SkillRuntimeTimeoutSeconds` | 单个工具执行超时时间 |
+完整接口可在启动后访问 Swagger。
 
 ## 开发文档
 
-开发前建议先阅读：
+建议先阅读：
 
 - `文档/项目必读.md`
 - `文档/开发规范.md`
 - `文档/项目/项目结构速查.md`
 - `文档/项目/后端API接口文档.md`
 
-## 开发边界
+## 说明
 
-- 本仓库可以直接运行当前 Agent 能力，但 `agent/` 更接近运行时交付物。
-- 日常业务开发通常只需要改后端、前端、数据库脚本和 Prompt 配置。
-- 除非正在调试 Agent 调用链路、工具定义或工具权限，否则一般不需要修改 `agent/`。
-- 完整的 Agent 脚本开发、工具脚手架和工程化维护方式会在后续独立开源项目中提供。
-
+NetMind 当前仍处于快速迭代阶段。开源版更适合作为可运行原型、二次开发基础和 AI 知识网络实验平台使用。欢迎围绕跨图关系、知识卡片、Agent 工具调用、模型适配和自托管体验继续扩展。
