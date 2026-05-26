@@ -70,7 +70,7 @@
 ## 维护注意事项
 
 1. 端点路径通过 `ENDPOINT_TEMPLATE` 格式化，修改路径时只需更新常量。
-2. API 基础地址优先从 `skill_runtime.shared.netmind_api_base_url` 读取，兼容多种配置方式。
+2. API 基础地址优先从 `tool_runtime.shared.netmind_api_base_url` 读取，兼容多种配置方式。
 3. 超时时间支持运行时注入，默认 10 秒。
 4. 所有 HTTP 错误均被捕获并返回结构化的错误信息，便于上层调试。
 5. `raw_response` 保留完整响应体，方便除错和扩展。

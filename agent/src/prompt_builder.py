@@ -12,12 +12,7 @@ from .skill_registry import summarize_prompt_skills
 from .tool_registry import summarize_tools
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PROMPT_DIR = Path(__file__).resolve().parent / "prompts"
-LEGACY_PROMPT_DIRS = [
-    PROJECT_ROOT / "tools" / "agent_terminal" / "prompts",
-    PROJECT_ROOT / "prompts",
-]
 PROMPT_TEMPLATE = PROMPT_DIR / "agent_kernel_prompt_zh.md"
 RETRY_PROMPT_TEMPLATE = PROMPT_DIR / "agent_kernel_retry_prompt_zh.md"
 
@@ -28,12 +23,10 @@ def build_prompt(
     tool_definitions: list[ToolDefinition] | None = None,
     tool_results: list[dict[str, Any]] | None = None,
     prompt_skill_definitions: list[PromptSkillDefinition] | None = None,
-    skill_definitions: list[ToolDefinition] | None = None,
-    skill_results: list[dict[str, Any]] | None = None,
 ) -> str:
     """Build the model prompt without leaking model_config."""
-    selected_tools = tool_definitions if tool_definitions is not None else skill_definitions or []
-    previous_tool_results = tool_results if tool_results is not None else skill_results or []
+    selected_tools = tool_definitions or []
+    previous_tool_results = tool_results or []
     template = _read_template(PROMPT_TEMPLATE)
     replacements = {
         "identity": request.identity,
@@ -45,11 +38,7 @@ def build_prompt(
         "active_skills": _to_pretty_json(summarize_prompt_skills(prompt_skill_definitions or [])),
         "tool_results": _to_pretty_json(previous_tool_results),
         "tool_failure_feedback": _to_pretty_json(_summarize_tool_failures(previous_tool_results)),
-        "skill_summaries": _to_pretty_json(summarize_tools(selected_tools)),
         "prompt_skill_summaries": _to_pretty_json(summarize_prompt_skills(prompt_skill_definitions or [])),
-        "allowed_skill_ids": _to_pretty_json([item.tool_id for item in selected_tools]),
-        "skill_results": _to_pretty_json(previous_tool_results),
-        "skill_failure_feedback": _to_pretty_json(_summarize_tool_failures(previous_tool_results)),
     }
     return _replace_template_vars(template, replacements)
 
@@ -74,13 +63,9 @@ def _replace_template_vars(template: str, replacements: dict[str, str]) -> str:
 
 
 def _read_template(primary_path: Path) -> str:
-    """Read a prompt template from src, falling back to legacy locations."""
+    """Read a prompt template from src."""
     if primary_path.exists():
         return primary_path.read_text(encoding="utf-8")
-    for legacy_dir in LEGACY_PROMPT_DIRS:
-        fallback_path = legacy_dir / primary_path.name
-        if fallback_path.exists():
-            return fallback_path.read_text(encoding="utf-8")
     raise FileNotFoundError(f"Prompt 模板不存在: {primary_path}")
 
 
@@ -89,17 +74,17 @@ def _to_pretty_json(data: Any) -> str:
     return json.dumps(make_json_safe(data), ensure_ascii=False, indent=2, sort_keys=True)
 
 
-def _summarize_tool_failures(skill_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _summarize_tool_failures(tool_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Extract retry-relevant Tool failure details for the model."""
     failures: list[dict[str, Any]] = []
-    for item in skill_results:
+    for item in tool_results:
         execution = item.get("execution") or {}
         if execution.get("status") not in {"failed", "permission_denied"}:
             continue
         failures.append(
             {
                 "call_id": item.get("call_id", ""),
-                "tool_id": item.get("tool_id") or item.get("skill_id", ""),
+                "tool_id": item.get("tool_id", ""),
                 "params": item.get("params") or {},
                 "status": execution.get("status", ""),
                 "error": execution.get("error") or "",

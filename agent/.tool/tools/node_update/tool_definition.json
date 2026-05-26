@@ -1,8 +1,8 @@
 {
-  "skill_id": "node_update",
-  "skill_name": "更新节点",
-  "description": "更新思维导图中指定节点的属性，支持修改父节点、标题、内容、排序号、画布坐标。",
-  "trigger": "当需要更新思维导图节点信息时使用，例如修改节点标题或内容。",
+  "tool_id": "node_update",
+  "tool_name": "更新节点",
+  "description": "全量更新思维导图中指定节点的属性，支持修改父节点、标题、内容、排序号、画布坐标。",
+  "trigger": "当需要更新思维导图节点信息时使用，例如修改节点标题或内容，需要先使用tool查询节点的内容，所有参数都需要填充。",
   "params": {
     "node_id": "long",
     "parentId": "long/null",

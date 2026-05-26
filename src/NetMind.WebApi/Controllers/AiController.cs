@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using NetMind.Common.Responses;
 using NetMind.Models.Dtos;
 using NetMind.Services.Interfaces;
+using NetMind.WebApi.Security;
 
 namespace NetMind.WebApi.Controllers;
 
@@ -9,20 +10,23 @@ namespace NetMind.WebApi.Controllers;
 [Route("api/ai")]
 public sealed class AiController : ControllerBase
 {
-    private const string FixedAgentRoleMapping = "netmind";
+    private const string FixedAgentDomain = "netmind";
 
     private readonly IAiCleanService _aiCleanService;
     private readonly IAiAgentService _aiAgentService;
     private readonly IAiConversationRecordService _conversationRecordService;
+    private readonly ApiKeyEncryptionService _apiKeyEncryptionService;
 
     public AiController(
         IAiCleanService aiCleanService,
         IAiAgentService aiAgentService,
-        IAiConversationRecordService conversationRecordService)
+        IAiConversationRecordService conversationRecordService,
+        ApiKeyEncryptionService apiKeyEncryptionService)
     {
         _aiCleanService = aiCleanService;
         _aiAgentService = aiAgentService;
         _conversationRecordService = conversationRecordService;
+        _apiKeyEncryptionService = apiKeyEncryptionService;
     }
 
     [HttpGet("models")]
@@ -36,6 +40,7 @@ public sealed class AiController : ControllerBase
     {
         try
         {
+            DecryptApiKey(request);
             return ApiResult<AiCleanResultDto>.Ok(await _aiCleanService.CleanAsync(request));
         }
         catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or HttpRequestException or TaskCanceledException)
@@ -49,6 +54,7 @@ public sealed class AiController : ControllerBase
     {
         try
         {
+            DecryptApiKey(request);
             return ApiResult<AiRequirementStructureResultDto>.Ok(await _aiCleanService.StructureRequirementAsync(request));
         }
         catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or HttpRequestException or TaskCanceledException)
@@ -62,6 +68,7 @@ public sealed class AiController : ControllerBase
     {
         try
         {
+            DecryptApiKey(request);
             var result = await _aiCleanService.ChatWithNodeAsync(request);
             if (!string.IsNullOrWhiteSpace(request.ConversationId))
             {
@@ -96,6 +103,7 @@ public sealed class AiController : ControllerBase
     {
         try
         {
+            DecryptApiKey(request);
             var result = await _aiCleanService.ChatWithMapAsync(request);
             if (!string.IsNullOrWhiteSpace(request.ConversationId))
             {
@@ -130,7 +138,8 @@ public sealed class AiController : ControllerBase
     {
         try
         {
-            ApplyFixedAgentRoleMapping(request);
+            DecryptApiKey(request);
+            ApplyFixedAgentDomain(request);
             var result = await _aiAgentService.ChatWithNodeAgentAsync(request);
             await SaveAgentConversationAsync(request, result);
 
@@ -147,7 +156,8 @@ public sealed class AiController : ControllerBase
     {
         try
         {
-            ApplyFixedAgentRoleMapping(request);
+            DecryptApiKey(request);
+            ApplyFixedAgentDomain(request);
             var result = await _aiAgentService.ChatWithMapAgentAsync(request);
             await SaveAgentConversationAsync(request, result);
 
@@ -164,7 +174,8 @@ public sealed class AiController : ControllerBase
     {
         try
         {
-            ApplyFixedAgentRoleMapping(request);
+            DecryptApiKey(request);
+            ApplyFixedAgentDomain(request);
             var result = await _aiAgentService.ChatWithGlobalAgentAsync(request);
             await SaveAgentConversationAsync(request, result);
 
@@ -181,7 +192,8 @@ public sealed class AiController : ControllerBase
     {
         try
         {
-            ApplyFixedAgentRoleMapping(request);
+            DecryptApiKey(request);
+            ApplyFixedAgentDomain(request);
             var result = await _aiAgentService.ChatWithAppHelpAgentAsync(request);
             await SaveAgentConversationAsync(request, result);
 
@@ -198,6 +210,7 @@ public sealed class AiController : ControllerBase
     {
         try
         {
+            DecryptApiKey(request);
             var result = await _aiCleanService.ChatForAppHelpAsync(request);
             if (!string.IsNullOrWhiteSpace(request.ConversationId))
             {
@@ -232,6 +245,7 @@ public sealed class AiController : ControllerBase
     {
         try
         {
+            DecryptApiKey(request);
             var result = await _aiCleanService.ChatWithContextAsync(request);
             if (!string.IsNullOrWhiteSpace(request.ConversationId))
             {
@@ -273,7 +287,7 @@ public sealed class AiController : ControllerBase
         {
             ConversationId = request.ConversationId,
             Role = "user",
-            Content = string.IsNullOrWhiteSpace(request.Message) ? "用户处理了 Agent Skill 权限。" : request.Message,
+            Content = string.IsNullOrWhiteSpace(request.Message) ? "用户处理了 Agent Tool 权限。" : request.Message,
             ModelId = request.ModelId
         });
         await _conversationRecordService.CreateAsync(new CreateAiConversationRecordRequest
@@ -287,8 +301,43 @@ public sealed class AiController : ControllerBase
         });
     }
 
-    private static void ApplyFixedAgentRoleMapping(AiAgentChatRequest request)
+    private static void ApplyFixedAgentDomain(AiAgentChatRequest request)
     {
-        request.DomainAndSkillBinding = FixedAgentRoleMapping;
+        request.Domain = FixedAgentDomain;
+    }
+
+    private void DecryptApiKey(AiCleanRequest request)
+    {
+        request.ApiKey = _apiKeyEncryptionService.DecryptIfEncrypted(request.ApiKey);
+    }
+
+    private void DecryptApiKey(AiRequirementStructureRequest request)
+    {
+        request.ApiKey = _apiKeyEncryptionService.DecryptIfEncrypted(request.ApiKey);
+    }
+
+    private void DecryptApiKey(AiContextChatRequest request)
+    {
+        request.ApiKey = _apiKeyEncryptionService.DecryptIfEncrypted(request.ApiKey);
+    }
+
+    private void DecryptApiKey(AiNodeChatRequest request)
+    {
+        request.ApiKey = _apiKeyEncryptionService.DecryptIfEncrypted(request.ApiKey);
+    }
+
+    private void DecryptApiKey(AiMapChatRequest request)
+    {
+        request.ApiKey = _apiKeyEncryptionService.DecryptIfEncrypted(request.ApiKey);
+    }
+
+    private void DecryptApiKey(AiAppHelpRequest request)
+    {
+        request.ApiKey = _apiKeyEncryptionService.DecryptIfEncrypted(request.ApiKey);
+    }
+
+    private void DecryptApiKey(AiAgentChatRequest request)
+    {
+        request.ApiKey = _apiKeyEncryptionService.DecryptIfEncrypted(request.ApiKey);
     }
 }

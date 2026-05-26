@@ -1,83 +1,101 @@
-"""API boundary adapters for new tool_* fields and legacy skill_* callers."""
+"""API boundary adapters for the public Agent Kernel protocol."""
 
 from __future__ import annotations
 
 from typing import Any
 
-from .compat import add_legacy_skill_call_aliases, normalize_tool_call_record
-
-
-API_V1 = "v1"
-API_V2 = "v2"
-SUPPORTED_API_VERSIONS = {API_V1, API_V2}
+API_VERSION = "v2"
+SUPPORTED_REQUEST_FIELDS = {
+    "api_version",
+    "conversation_id",
+    "user_text",
+    "domain",
+    "identity",
+    "cues",
+    "model_config",
+    "context",
+    "tool_runtime",
+    "history_tool_calls",
+    "confirmed_tool_calls",
+}
 
 
 def normalize_request_payload(raw_request: dict[str, Any] | None) -> dict[str, Any]:
-    """Normalize inbound API payloads before they enter kernel internals."""
+    """Validate and normalize an inbound public API payload."""
+    if raw_request is None:
+        raise ValueError("request payload is required")
+    if not isinstance(raw_request, dict):
+        raise ValueError("request payload must be a JSON object")
     raw = dict(raw_request or {})
-    normalized = dict(raw)
-    normalized["api_version"] = normalize_api_version(raw.get("api_version"))
-    if "domain" not in normalized and raw.get("domain_and_skill_binding") is not None:
-        normalized["domain"] = raw["domain_and_skill_binding"]
-    normalized.setdefault("domain", "default")
-    if "tool_runtime" not in normalized:
-        normalized["tool_runtime"] = _read_legacy_runtime(raw)
-    normalized["history_tool_calls"] = [
-        normalize_tool_call_record(item)
-        for item in _read_call_list(raw, "history_tool_calls", "history_skill_calls")
-    ]
-    normalized["confirmed_tool_calls"] = [
-        normalize_tool_call_record(item)
-        for item in _read_call_list(raw, "confirmed_tool_calls", "confirmed_skill_calls")
-    ]
-    return normalized
+    unsupported_fields = sorted(set(raw) - SUPPORTED_REQUEST_FIELDS)
+    if unsupported_fields:
+        raise ValueError(f"unsupported request fields: {', '.join(unsupported_fields)}")
+
+    return {
+        **raw,
+        "api_version": _read_api_version(raw.get("api_version")),
+        "domain": _read_string(raw, "domain", default="default"),
+        "tool_runtime": _read_dict(raw, "tool_runtime", default={}),
+        "history_tool_calls": _read_tool_call_list(raw, "history_tool_calls"),
+        "confirmed_tool_calls": _read_tool_call_list(raw, "confirmed_tool_calls"),
+    }
 
 
-def build_api_response(
-    core_response: dict[str, Any],
-    include_legacy: bool = True,
-    api_version: str = API_V1,
-) -> dict[str, Any]:
+def build_api_response(core_response: dict[str, Any]) -> dict[str, Any]:
     """Adapt the internal Tool response to the public API shape."""
     response = dict(core_response)
-    response["api_version"] = normalize_api_version(api_version)
-    tool_calls = [
-        normalize_tool_call_record(item)
-        for item in response.get("tool_calls", [])
-        if isinstance(item, dict)
-    ]
-    response["tool_calls"] = tool_calls
-    if include_legacy:
-        response["skill_calls"] = [add_legacy_skill_call_aliases(item) for item in tool_calls]
+    response["api_version"] = API_VERSION
+    response["tool_calls"] = _read_response_tool_calls(response)
     return response
 
 
-def normalize_api_version(value: Any) -> str:
-    """Return a supported API version, defaulting to the v1 compatibility contract."""
-    version = str(value or API_V1).strip().lower()
-    if version not in SUPPORTED_API_VERSIONS:
-        raise ValueError(f"unsupported api_version: {value}")
+def _read_api_version(value: Any) -> str:
+    """Validate an optional protocol marker."""
+    if value is None or value == "":
+        return API_VERSION
+    version = str(value or "").strip().lower()
+    if version != API_VERSION:
+        raise ValueError(f"unsupported api_version: {value}; expected {API_VERSION}")
     return version
 
 
-def should_include_legacy_fields(api_version: str) -> bool:
-    """Only API v1 exposes legacy skill_* aliases."""
-    return normalize_api_version(api_version) == API_V1
+def _read_string(raw: dict[str, Any], key: str, default: str) -> str:
+    value = raw.get(key, default)
+    if not isinstance(value, str):
+        raise ValueError(f"{key} must be a string")
+    return value.strip() or default
 
 
-def _read_legacy_runtime(raw: dict[str, Any]) -> dict[str, Any]:
-    runtime = raw.get("skill_runtime")
-    if runtime is None:
-        runtime = raw.get("runtime_params")
-    if runtime is None:
-        runtime = raw.get("client_params")
-    return dict(runtime or {})
+def _read_dict(raw: dict[str, Any], key: str, default: dict[str, Any]) -> dict[str, Any]:
+    value = raw.get(key, default)
+    if not isinstance(value, dict):
+        raise ValueError(f"{key} must be an object")
+    return dict(value)
 
 
-def _read_call_list(raw: dict[str, Any], current_key: str, legacy_key: str) -> list[dict[str, Any]]:
-    value = raw.get(current_key)
-    if value is None:
-        value = raw.get(legacy_key)
+def _read_tool_call_list(raw: dict[str, Any], key: str) -> list[dict[str, Any]]:
+    value = raw.get(key, [])
     if not isinstance(value, list):
-        return []
-    return [dict(item) for item in value if isinstance(item, dict)]
+        raise ValueError(f"{key} must be an array")
+    return [_normalize_tool_call_record(item, key) for item in value]
+
+
+def _read_response_tool_calls(response: dict[str, Any]) -> list[dict[str, Any]]:
+    value = response.get("tool_calls", [])
+    if not isinstance(value, list):
+        raise ValueError("tool_calls must be an array")
+    return [_normalize_tool_call_record(item, "tool_calls") for item in value]
+
+
+def _normalize_tool_call_record(record: Any, field_name: str) -> dict[str, Any]:
+    if not isinstance(record, dict):
+        raise ValueError(f"{field_name} entries must be objects")
+    forbidden = {"skill_id", "skill_name"} & set(record)
+    if forbidden:
+        raise ValueError(f"{field_name} entries contain unsupported fields: {', '.join(sorted(forbidden))}")
+    normalized = dict(record)
+    normalized["params"] = dict(normalized.get("params") or {})
+    normalized["permission"] = dict(normalized.get("permission") or {})
+    normalized["execution"] = dict(normalized.get("execution") or {})
+    normalized["definition"] = dict(normalized.get("definition") or {})
+    return normalized

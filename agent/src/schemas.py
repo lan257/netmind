@@ -44,51 +44,46 @@ class ToolDefinition:
         param_descriptions: dict[str, str] | None = None,
         category: str = "",
         tags: list[str] | None = None,
-        skill_id: str | None = None,
-        skill_name: str | None = None,
     ) -> None:
-        normalized_tool_id = tool_id if tool_id is not None else skill_id
-        normalized_tool_name = tool_name if tool_name is not None else skill_name
-        if not normalized_tool_id:
+        if not tool_id:
             raise ValueError("ToolDefinition 缺少字段: tool_id")
-        if not normalized_tool_name:
+        if not tool_name:
             raise ValueError("ToolDefinition 缺少字段: tool_name")
         if permission_level not in PERMISSION_LEVELS:
             raise ValueError(f"未知权限等级: {permission_level}")
-        object.__setattr__(self, "tool_id", str(normalized_tool_id))
-        object.__setattr__(self, "tool_name", str(normalized_tool_name))
+        object.__setattr__(self, "tool_id", str(tool_id))
+        object.__setattr__(self, "tool_name", str(tool_name))
         object.__setattr__(self, "description", str(description))
         object.__setattr__(self, "trigger", str(trigger))
-        normalized_params, normalized_param_descriptions = _normalize_param_metadata(
-            params,
-            param_descriptions,
-        )
-        object.__setattr__(self, "params", normalized_params)
+        object.__setattr__(self, "params", dict(params or {}))
         object.__setattr__(self, "parameters", dict(parameters or {}))
         object.__setattr__(self, "policy", dict(policy or {}))
         object.__setattr__(self, "permission_level", str(permission_level))
         object.__setattr__(self, "permission_message", str(permission_message))
         object.__setattr__(self, "script_path", str(script_path))
         object.__setattr__(self, "timeout_seconds", _normalize_timeout_seconds(timeout_seconds))
-        object.__setattr__(self, "param_descriptions", normalized_param_descriptions)
+        object.__setattr__(self, "param_descriptions", dict(param_descriptions or {}))
         object.__setattr__(self, "category", _normalize_category(category))
         object.__setattr__(self, "tags", _normalize_tags(tags))
 
     @property
     def skill_id(self) -> str:
-        """Backward-compatible alias for callers not yet migrated."""
+        """Management tooling still presents tool identifiers as skill IDs."""
         return self.tool_id
 
     @property
     def skill_name(self) -> str:
-        """Backward-compatible alias for callers not yet migrated."""
+        """Management tooling still presents tool names as skill names."""
         return self.tool_name
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ToolDefinition":
-        """Build a Tool definition from either new tool_* or legacy skill_* fields."""
-        tool_id = data.get("tool_id", data.get("skill_id"))
-        tool_name = data.get("tool_name", data.get("skill_name"))
+        """Build a Tool definition from the public tool_* fields."""
+        unsupported = sorted({"skill_id", "skill_name"} & set(data))
+        if unsupported:
+            raise ValueError(f"ToolDefinition 不支持字段: {', '.join(unsupported)}")
+        tool_id = data.get("tool_id")
+        tool_name = data.get("tool_name")
         permission = data.get("permission") if isinstance(data.get("permission"), dict) else {}
         runner = data.get("runner") if isinstance(data.get("runner"), dict) else {}
         params = data.get("params")
@@ -191,7 +186,6 @@ class AgentRequest:
     tool_runtime: dict[str, Any] = field(default_factory=dict)
     confirmed_tool_calls: list[dict[str, Any]] = field(default_factory=list)
     history_tool_calls: list[dict[str, Any]] = field(default_factory=list)
-    api_version: str = "v1"
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "AgentRequest":
@@ -204,34 +198,13 @@ class AgentRequest:
             user_text=str(normalized.get("user_text") or ""),
             domain=str(normalized.get("domain") or "default"),
             identity=str(normalized.get("identity") or "你是一个 AI Agent 助手"),
-            cues=str(normalized.get("cues") or normalized.get("output_structure") or ""),
+            cues=str(normalized.get("cues") or ""),
             model_config=dict(normalized.get("model_config") or {}),
             context=dict(normalized.get("context") or {}),
             tool_runtime=dict(normalized.get("tool_runtime") or {}),
             confirmed_tool_calls=list(normalized.get("confirmed_tool_calls") or []),
             history_tool_calls=list(normalized.get("history_tool_calls") or []),
-            api_version=str(normalized.get("api_version") or "v1"),
         )
-
-    @property
-    def domain_and_skill_binding(self) -> str:
-        """Backward-compatible request domain alias."""
-        return self.domain
-
-    @property
-    def skill_runtime(self) -> dict[str, Any]:
-        """Backward-compatible runtime alias."""
-        return self.tool_runtime
-
-    @property
-    def confirmed_skill_calls(self) -> list[dict[str, Any]]:
-        """Backward-compatible confirmed call alias."""
-        return self.confirmed_tool_calls
-
-    @property
-    def history_skill_calls(self) -> list[dict[str, Any]]:
-        """Backward-compatible history call alias."""
-        return self.history_tool_calls
 
 
 def _params_from_json_schema(schema: dict[str, Any]) -> dict[str, str]:
@@ -248,33 +221,6 @@ def _params_from_json_schema(schema: dict[str, Any]) -> dict[str, str]:
             raw_type = "/".join(str(item) for item in raw_type)
         params[str(name)] = str(raw_type)
     return params
-
-
-def _normalize_param_metadata(
-    params: dict[str, Any] | None,
-    param_descriptions: dict[str, str] | None,
-) -> tuple[dict[str, str], dict[str, str]]:
-    """Flatten object-style param declarations for the YAML role-list format."""
-    normalized_descriptions = {
-        str(name): str(description)
-        for name, description in dict(param_descriptions or {}).items()
-    }
-    normalized_params: dict[str, str] = {}
-    for name, raw_definition in dict(params or {}).items():
-        normalized_name = str(name)
-        if not isinstance(raw_definition, dict):
-            normalized_params[normalized_name] = str(raw_definition)
-            continue
-
-        raw_type = raw_definition.get("type") or "string"
-        if isinstance(raw_type, list):
-            raw_type = "/".join(str(item) for item in raw_type)
-        normalized_params[normalized_name] = str(raw_type)
-
-        description = raw_definition.get("description")
-        if description is not None and normalized_name not in normalized_descriptions:
-            normalized_descriptions[normalized_name] = str(description)
-    return normalized_params, normalized_descriptions
 
 
 def _normalize_tags(value: Any) -> list[str]:

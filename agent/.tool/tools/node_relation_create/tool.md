@@ -83,7 +83,7 @@
 
 1. 端点路径通过常量 `ENDPOINT` 定义，修改时只需更新常量。
 2. `sourceId`、`targetId`、`relationType`、`mapId` 为必需参数，`weight` 可选默认 1.0。
-3. API 基础地址优先从 `skill_runtime.shared.netmind_api_base_url` 读取。
+3. API 基础地址优先从 `tool_runtime.shared.netmind_api_base_url` 读取。
 4. 超时时间支持运行时注入，默认 10 秒。
 5. 所有 HTTP 错误均被捕获并返回结构化的错误信息。
 6. 创建操作需要用户确认权限（permission_level=confirm）。

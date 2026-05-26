@@ -1,6 +1,6 @@
 tools:
-  - skill_id: node_by_map
-    skill_name: 查询导图下节点
+  - tool_id: node_by_map
+    tool_name: 查询导图下节点
     description: 根据导图 ID 查询该导图下的所有节点
     trigger: 当需要获取某个思维导图的所有节点时使用
     params:
@@ -16,8 +16,8 @@ tools:
     script_path: .tool/tools/node_by_map/run.py
     category: netmind
     tags: nodes, query, mindmap
-  - skill_id: node_create
-    skill_name: 创建节点
+  - tool_id: node_create
+    tool_name: 创建节点
     description: 在导图中创建节点
     trigger: 当需要在思维导图中创建新节点时使用
     params:
@@ -34,15 +34,15 @@ tools:
       title: 节点标题
       content: 节点内容
       orderNo: 同级排序号
-      positionX: 画布 X 坐标
-      positionY: 画布 Y 坐标
+      positionX: 画布 X 坐标，默认为null，不需要填充
+      positionY: 画布 Y 坐标，默认为null，不需要填充
     permission_level: confirm
     permission_message: 是否允许创建节点 (标题: {title})
     script_path: .tool/tools/node_create/run.py
     category: netmind
     tags: node, create, add, mindmap
-  - skill_id: node_get
-    skill_name: 查询单个节点
+  - tool_id: node_get
+    tool_name: 查询单个节点
     description: 按ID查询节点
     trigger: 当需要根据节点ID查询单个节点详情时使用
     params:
@@ -54,8 +54,8 @@ tools:
     script_path: .tool/tools/node_get/run.py
     category: netmind
     tags: node, get, query, mindmap
-  - skill_id: node_delete_subtree
-    skill_name: 删除节点子树
+  - tool_id: node_delete_subtree
+    tool_name: 删除节点子树
     description: 删除指定节点及其子孙节点
     trigger: 当需要删除节点及其所有子节点时使用
     params:
@@ -67,8 +67,8 @@ tools:
     script_path: .tool/tools/node_delete_subtree/run.py
     category: netmind
     tags: node, delete, subtree, cascade, mindmap
-  - skill_id: node_list_by_map
-    skill_name: 查询导图下节点
+  - tool_id: node_list_by_map
+    tool_name: 查询导图下节点
     description: 查询某个导图下的所有节点
     trigger: 当需要查询某个思维导图中的所有节点时使用
     params:
@@ -80,8 +80,8 @@ tools:
     script_path: .tool/tools/node_list_by_map/run.py
     category: netmind
     tags: node, list, query, mindmap
-  - skill_id: node_search
-    skill_name: 搜索节点
+  - tool_id: node_search
+    tool_name: 搜索节点
     description: 按关键词搜索节点，可限定导图范围
     trigger: 当需要按关键词搜索思维导图中的节点时使用
     params:
@@ -97,10 +97,10 @@ tools:
     script_path: .tool/tools/node_search/run.py
     category: netmind
     tags: node, search, keyword, mindmap
-  - skill_id: node_update
-    skill_name: 更新节点
-    description: 更新思维导图中指定节点的属性，支持修改父节点、标题、内容、排序号、画布坐标。
-    trigger: 当需要更新思维导图节点信息时使用，例如修改节点标题或内容。
+  - tool_id: node_update
+    tool_name: 更新节点
+    description: 全量更新思维导图中指定节点的属性，支持修改父节点、标题、内容、排序号、画布坐标。
+    trigger: 当需要更新思维导图节点信息时使用，例如修改节点标题或内容，需要先使用tool查询节点的内容，所有参数都需要填充。
     params:
       node_id: long
       parentId: long/null
@@ -122,8 +122,8 @@ tools:
     script_path: .tool/tools/node_update/run.py
     category: netmind
     tags: node, update
-  - skill_id: mind_map_cascade_delete
-    skill_name: 级联删除导图
+  - tool_id: mind_map_cascade_delete
+    tool_name: 级联删除导图
     description: 删除导图并级联删除相关节点与关系
     trigger: 当需要删除思维导图及其所有节点和关系时使用
     params:
@@ -135,8 +135,8 @@ tools:
     script_path: .tool/tools/mind_map_cascade_delete/run.py
     category: netmind
     tags: mindmap, delete, cascade
-  - skill_id: mind_map_delete
-    skill_name: 删除导图
+  - tool_id: mind_map_delete
+    tool_name: 删除导图
     description: 删除单个思维导图，不级联删除关联节点
     trigger: 当需要删除一个思维导图且不删除其节点时使用
     params:
@@ -148,8 +148,8 @@ tools:
     script_path: .tool/tools/mind_map_delete/run.py
     category: netmind
     tags: mindmap, delete
-  - skill_id: mind_map_get
-    skill_name: 查询单个导图
+  - tool_id: mind_map_get
+    tool_name: 查询单个导图
     description: 按 ID 查询单个思维导图的详细信息
     trigger: 当需要根据导图ID获取单个思维导图的详细信息时使用
     params:
@@ -161,8 +161,8 @@ tools:
     script_path: .tool/tools/mind_map_get/run.py
     category: netmind
     tags: mindmap, get, detail
-  - skill_id: mind_map_list
-    skill_name: 查询导图列表
+  - tool_id: mind_map_list
+    tool_name: 查询导图列表
     description: 查询全部思维导图列表
     trigger: 当需要获取所有思维导图的列表信息时使用
     params:
@@ -171,8 +171,8 @@ tools:
     script_path: .tool/tools/mind_map_list/run.py
     category: netmind
     tags: mindmap, list
-  - skill_id: mind_map_update
-    skill_name: 更新导图
+  - tool_id: mind_map_update
+    tool_name: 更新导图
     description: 更新导图标题或根节点
     trigger: 当需要修改思维导图的标题或根节点时使用
     params:
@@ -188,8 +188,8 @@ tools:
     script_path: .tool/tools/mind_map_update/run.py
     category: netmind
     tags: mindmap, update
-  - skill_id: node_relation_create
-    skill_name: 创建关系
+  - tool_id: node_relation_create
+    tool_name: 创建关系
     description: 创建节点之间的关联
     trigger: 当需要创建两个节点之间的关联关系时使用
     params:
@@ -209,8 +209,8 @@ tools:
     script_path: .tool/tools/node_relation_create/run.py
     category: netmind
     tags: node, relation, create, mindmap
-  - skill_id: node_relation_delete
-    skill_name: 删除关系
+  - tool_id: node_relation_delete
+    tool_name: 删除关系
     description: 删除指定节点关系
     trigger: 当需要删除节点之间的关联关系时使用
     params:
@@ -222,8 +222,8 @@ tools:
     script_path: .tool/tools/node_relation_delete/run.py
     category: netmind
     tags: node, relation, delete, mindmap
-  - skill_id: node_relation_delete_by_node
-    skill_name: 删除节点相关关系
+  - tool_id: node_relation_delete_by_node
+    tool_name: 删除节点相关关系
     description: 删除某节点相关的所有关系
     trigger: 当需要删除某个节点相关的所有关联关系时使用
     params:
@@ -235,8 +235,8 @@ tools:
     script_path: .tool/tools/node_relation_delete_by_node/run.py
     category: netmind
     tags: node, relation, delete, mindmap
-  - skill_id: node_relation_get
-    skill_name: 查询单个关系
+  - tool_id: node_relation_get
+    tool_name: 查询单个关系
     description: 按ID查询节点关系
     trigger: 当需要按ID查询某个节点关系的详细信息时使用
     params:
@@ -248,8 +248,8 @@ tools:
     script_path: .tool/tools/node_relation_get/run.py
     category: netmind
     tags: node, relation, get, mindmap
-  - skill_id: node_relation_list_by_map
-    skill_name: 查询导图下关系
+  - tool_id: node_relation_list_by_map
+    tool_name: 查询导图下关系
     description: 查询某个导图下的所有节点关系
     trigger: 当需要查询某个思维导图下的所有节点关系时使用
     params:
@@ -261,8 +261,8 @@ tools:
     script_path: .tool/tools/node_relation_list_by_map/run.py
     category: netmind
     tags: node, relation, list, mindmap
-  - skill_id: node_relation_list_by_node
-    skill_name: 查询节点相关关系
+  - tool_id: node_relation_list_by_node
+    tool_name: 查询节点相关关系
     description: 查询与某节点相关的所有关系
     trigger: 当需要查询某个节点相关的所有关系时使用
     params:
@@ -274,8 +274,8 @@ tools:
     script_path: .tool/tools/node_relation_list_by_node/run.py
     category: netmind
     tags: node, relation, list, mindmap
-  - skill_id: mind_map_create
-    skill_name: 创建导图
+  - tool_id: mind_map_create
+    tool_name: 创建导图
     description: 创建新的思维导图
     trigger: 当需要新建一个思维导图时使用
     params:
@@ -287,28 +287,3 @@ tools:
     script_path: .tool/tools/mind_map_create/run.py
     category: netmind
     tags: mindmap, create
-  - skill_id: read_doc
-    skill_name: 文件读取
-    description: 读取指定文件内容
-    trigger: 当需要读取文件内容时使用
-    params:
-      filepath: string
-    permission_level: none
-    permission_message: 是否允许读取 {filepath}
-    script_path: .tool/tools/read_doc/run.py
-    category: 文件操作
-  - skill_id: incremental_file_modifier
-    skill_name: 增量文件修改器
-    description: 仅允许在指定文件最后面进行增量添加文本，不修改已有内容
-    trigger: 当需要在文件末尾追加内容时使用
-    params:
-      file_path: string
-      text: string
-    param_descriptions:
-      file_path: 要修改的目标文件路径（绝对路径）
-      text: 要追加到文件末尾的文本内容
-    permission_level: none
-    permission_message: 
-    script_path: .tool/tools/incremental_file_modifier/run.py
-    category: 文件操作
-    tags: 文件, 追加, 文本

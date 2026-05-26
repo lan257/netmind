@@ -12,6 +12,8 @@ public sealed class AiModelOptionDto
 
     public string Endpoint { get; init; } = string.Empty;
 
+    public string Model { get; init; } = string.Empty;
+
     public bool IsDefault { get; init; }
 
     public string Status { get; init; } = string.Empty;
@@ -25,11 +27,13 @@ public sealed class AiCleanRequest
 
     public string? ModelId { get; init; }
 
-    public string? ApiKey { get; init; }
+    public string? ApiKey { get; set; }
 
     public string? Endpoint { get; init; }
 
     public string? Provider { get; init; }
+
+    public string? Model { get; init; }
 }
 
 public sealed class AiRequirementStructureRequest
@@ -40,11 +44,13 @@ public sealed class AiRequirementStructureRequest
 
     public string? ModelId { get; init; }
 
-    public string? ApiKey { get; init; }
+    public string? ApiKey { get; set; }
 
     public string? Endpoint { get; init; }
 
     public string? Provider { get; init; }
+
+    public string? Model { get; init; }
 }
 
 public sealed class AiContextChatRequest
@@ -57,11 +63,13 @@ public sealed class AiContextChatRequest
 
     public string? ModelId { get; init; }
 
-    public string? ApiKey { get; init; }
+    public string? ApiKey { get; set; }
 
     public string? Endpoint { get; init; }
 
     public string? Provider { get; init; }
+
+    public string? Model { get; init; }
 }
 
 public sealed class AiCleanResultDto
@@ -102,13 +110,15 @@ public sealed class AiNodeChatRequest
 
     public string? ModelId { get; init; }
 
-    public string? ApiKey { get; init; }
+    public string? ApiKey { get; set; }
 
     public int MaxContextLength { get; init; } = 51200;
 
     public string? Endpoint { get; init; }
 
     public string? Provider { get; init; }
+
+    public string? Model { get; init; }
 }
 
 public sealed class AiNodeChatResult
@@ -140,29 +150,25 @@ public class AiAgentChatRequest
 
     public string? ModelId { get; init; }
 
-    public string? ApiKey { get; init; }
+    public string? ApiKey { get; set; }
 
     public string? Endpoint { get; init; }
 
     public string? Provider { get; init; }
 
+    public string? Model { get; init; }
+
     public int MaxContextLength { get; init; } = 51200;
 
     public string? AgentBuildPath { get; init; }
 
-    public string? Domain { get; init; }
-
-    public string? DomainAndSkillBinding { get; set; } = "netmind";
+    public string? Domain { get; set; }
 
     public JsonElement? AgentContext { get; init; }
 
     public IReadOnlyList<JsonElement> ConfirmedToolCalls { get; init; } = Array.Empty<JsonElement>();
 
     public IReadOnlyList<JsonElement> HistoryToolCalls { get; init; } = Array.Empty<JsonElement>();
-
-    public IReadOnlyList<JsonElement> ConfirmedSkillCalls { get; init; } = Array.Empty<JsonElement>();
-
-    public IReadOnlyList<JsonElement> HistorySkillCalls { get; init; } = Array.Empty<JsonElement>();
 }
 
 public sealed class AiNodeAgentChatRequest : AiAgentChatRequest
@@ -196,8 +202,6 @@ public sealed class AiAgentChatResult
     public string AgentTarget { get; init; } = string.Empty;
 
     public IReadOnlyList<JsonElement> ToolCalls { get; init; } = Array.Empty<JsonElement>();
-
-    public IReadOnlyList<JsonElement> SkillCalls { get; init; } = Array.Empty<JsonElement>();
 
     public JsonElement ContextUpdate { get; init; }
 
@@ -239,13 +243,15 @@ public sealed class AiMapChatRequest
 
     public string? ModelId { get; init; }
 
-    public string? ApiKey { get; init; }
+    public string? ApiKey { get; set; }
 
     public int MaxContextLength { get; init; } = 51200;
 
     public string? Endpoint { get; init; }
 
     public string? Provider { get; init; }
+
+    public string? Model { get; init; }
 }
 
 public sealed class AiMapChatResult
@@ -277,13 +283,15 @@ public sealed class AiAppHelpRequest
 
     public string? ModelId { get; init; }
 
-    public string? ApiKey { get; init; }
+    public string? ApiKey { get; set; }
 
     public int MaxContextLength { get; init; } = 51200;
 
     public string? Endpoint { get; init; }
 
     public string? Provider { get; init; }
+
+    public string? Model { get; init; }
 }
 
 public sealed class AiAppHelpResult

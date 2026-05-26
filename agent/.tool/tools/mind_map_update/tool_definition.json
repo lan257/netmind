@@ -1,6 +1,6 @@
 {
-  "skill_id": "mind_map_update",
-  "skill_name": "更新导图",
+  "tool_id": "mind_map_update",
+  "tool_name": "更新导图",
   "description": "更新导图标题或根节点",
   "trigger": "当需要修改思维导图的标题或根节点时使用",
   "params": {

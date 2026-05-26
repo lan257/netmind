@@ -1,6 +1,6 @@
 {
-  "skill_id": "node_create",
-  "skill_name": "创建节点",
+  "tool_id": "node_create",
+  "tool_name": "创建节点",
   "description": "在导图中创建节点",
   "trigger": "当需要在思维导图中创建新节点时使用",
   "params": {
@@ -18,8 +18,8 @@
     "title": "节点标题",
     "content": "节点内容",
     "orderNo": "同级排序号",
-    "positionX": "画布 X 坐标",
-    "positionY": "画布 Y 坐标"
+    "positionX": "画布 X 坐标，默认为null，不需要填充",
+    "positionY": "画布 Y 坐标，默认为null，不需要填充"
   },
   "permission_level": "confirm",
   "permission_message": "是否允许创建节点 (标题: {title})",

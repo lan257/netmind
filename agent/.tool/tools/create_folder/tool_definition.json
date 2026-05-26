@@ -1,6 +1,6 @@
 {
-  "skill_id": "create_folder",
-  "skill_name": "创建文件夹",
+  "tool_id": "create_folder",
+  "tool_name": "创建文件夹",
   "description": "创建文件夹（目录），如果父目录不存在会递归创建。不创建文件。",
   "trigger": "当需要创建目录、建立文件夹结构时使用",
   "params": {

@@ -1,6 +1,6 @@
 {
-  "skill_id": "echo_text",
-  "skill_name": "文本回显",
+  "tool_id": "echo_text",
+  "tool_name": "文本回显",
   "description": "返回输入文本，用于验证无需权限 Skill 的执行链路",
   "trigger": "当需要测试无需权限 Skill 执行流程时使用",
   "params": {

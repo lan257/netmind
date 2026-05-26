@@ -1,6 +1,6 @@
 {
-  "skill_id": "node_delete_subtree",
-  "skill_name": "删除节点子树",
+  "tool_id": "node_delete_subtree",
+  "tool_name": "删除节点子树",
   "description": "删除指定节点及其子孙节点",
   "trigger": "当需要删除节点及其所有子节点时使用",
   "params": {

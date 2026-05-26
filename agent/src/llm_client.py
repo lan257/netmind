@@ -8,7 +8,6 @@ import urllib.error
 import urllib.request
 from typing import Any
 
-from .compat import add_legacy_skill_call_draft_aliases, normalize_tool_call_draft
 from .prompt_builder import build_retry_prompt
 from .schemas import AgentRequest, ToolDefinition
 
@@ -23,12 +22,10 @@ def call_llm(
     request: AgentRequest,
     tool_definitions: list[ToolDefinition] | None = None,
     tool_results: list[dict[str, Any]] | None = None,
-    skill_definitions: list[ToolDefinition] | None = None,
-    skill_results: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Call the configured LLM and return a validated Agent Kernel JSON object."""
-    selected_tools = tool_definitions if tool_definitions is not None else skill_definitions or []
-    previous_tool_results = tool_results if tool_results is not None else skill_results or []
+    selected_tools = tool_definitions or []
+    previous_tool_results = tool_results or []
     model_name = str(request.model_config.get("model_name") or "").lower()
     if model_name in FAKE_MODEL_NAMES:
         return _call_fake_llm(request, selected_tools, previous_tool_results)
@@ -36,22 +33,9 @@ def call_llm(
 
 
 def parse_tool_call_drafts(ai_response: dict[str, Any]) -> list[dict[str, Any]]:
-    """Parse Tool call drafts and adapt legacy model output when needed."""
+    """Parse Tool call drafts from the model output."""
     drafts = ai_response.get("tool_call_drafts")
-    if drafts is None:
-        drafts = ai_response.get("skill_call_drafts")
-    return [normalize_tool_call_draft(draft) for draft in drafts or [] if isinstance(draft, dict)]
-
-
-def parse_skill_call_drafts(ai_response: dict[str, Any]) -> list[dict[str, Any]]:
-    """Compatibility wrapper returning legacy draft aliases."""
-    return [_to_legacy_draft(draft) for draft in parse_tool_call_drafts(ai_response)]
-
-
-def _to_legacy_draft(draft: dict[str, Any]) -> dict[str, Any]:
-    converted = add_legacy_skill_call_draft_aliases(draft)
-    converted.pop("tool_id", None)
-    return converted
+    return [dict(draft) for draft in drafts or [] if isinstance(draft, dict)]
 
 
 def validate_llm_response(data: Any) -> tuple[bool, str]:
@@ -67,17 +51,16 @@ def validate_llm_response(data: Any) -> tuple[bool, str]:
         return False, "main_text 必须是字符串"
     drafts = data.get("tool_call_drafts")
     if drafts is None:
-        drafts = data.get("skill_call_drafts")
-    if drafts is None:
         return False, "缺少字段: tool_call_drafts"
     if not isinstance(drafts, list):
         return False, "tool_call_drafts 必须是数组"
     normalized_tool_drafts: list[dict[str, Any]] = []
-    normalized_legacy_drafts: list[dict[str, Any]] = []
     for index, draft in enumerate(drafts, start=1):
         if not isinstance(draft, dict):
             return False, f"tool_call_drafts[{index}] 必须是对象"
-        tool_id = draft.get("tool_id", draft.get("skill_id"))
+        if "skill_id" in draft:
+            return False, f"tool_call_drafts[{index}] 不支持字段 skill_id"
+        tool_id = draft.get("tool_id")
         if not isinstance(tool_id, str):
             return False, f"tool_call_drafts[{index}].tool_id 必须是字符串"
         if not isinstance(draft.get("params"), dict):
@@ -88,9 +71,7 @@ def validate_llm_response(data: Any) -> tuple[bool, str]:
             return False, f"tool_call_drafts[{index}].expected_result 必须是字符串"
         normalized_tool_draft = dict(draft)
         normalized_tool_draft["tool_id"] = tool_id
-        normalized_tool_draft.pop("skill_id", None)
         normalized_tool_drafts.append(normalized_tool_draft)
-        normalized_legacy_drafts.append(_to_legacy_draft(normalized_tool_draft))
     context_update = data["context_update"]
     if not isinstance(context_update, dict):
         return False, "context_update 必须是对象"
@@ -101,7 +82,6 @@ def validate_llm_response(data: Any) -> tuple[bool, str]:
     if "needs_continuation" in data and not isinstance(data["needs_continuation"], bool):
         return False, "needs_continuation 必须是 boolean"
     data["tool_call_drafts"] = normalized_tool_drafts
-    data["skill_call_drafts"] = normalized_legacy_drafts
     data["context_update"].setdefault("working_memory", {})
     data["context_update"].setdefault("summary", "")
     data.setdefault("needs_continuation", False)
@@ -304,7 +284,6 @@ def _error_response(message: str) -> dict[str, Any]:
         "agent_target": "大模型调用失败",
         "main_text": message,
         "tool_call_drafts": [],
-        "skill_call_drafts": [],
         "context_update": {
             "working_memory": {},
             "summary": message,

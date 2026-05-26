@@ -1,6 +1,6 @@
 {
-  "skill_id": "mind_map_cascade_delete",
-  "skill_name": "级联删除导图",
+  "tool_id": "mind_map_cascade_delete",
+  "tool_name": "级联删除导图",
   "description": "删除导图并级联删除相关节点与关系",
   "trigger": "当需要删除思维导图及其所有节点和关系时使用",
   "params": {

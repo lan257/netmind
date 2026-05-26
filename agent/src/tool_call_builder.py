@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from .compat import normalize_tool_call_draft, normalize_tool_call_record
 from .schemas import ToolDefinition
 from .state_machine import build_tool_call_id, generate_turn_id
 from .tool_param_validator import ToolParamValidationResult, validate_tool_params
@@ -20,7 +19,7 @@ def rebuild_tool_call_records(
     definition_map = {definition.tool_id: definition for definition in tool_definitions}
     records: list[dict[str, Any]] = []
     for index, raw_draft in enumerate(drafts, start=1):
-        draft = normalize_tool_call_draft(raw_draft)
+        draft = _normalize_tool_call_draft(raw_draft)
         tool_id = str(draft.get("tool_id") or "")
         call_id = build_tool_call_id(current_turn_id, index)
         definition = definition_map.get(tool_id)
@@ -71,11 +70,11 @@ def merge_permission_result(
     confirmed_tool_calls: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     """Merge frontend permission decisions into previous ToolCallRecords."""
-    decisions = [normalize_tool_call_record(item) for item in confirmed_tool_calls]
+    decisions = [_normalize_tool_call_record(item) for item in confirmed_tool_calls]
     decision_map = {item.get("call_id"): item for item in decisions}
     merged_calls: list[dict[str, Any]] = []
     for raw_record in history_tool_calls:
-        record = normalize_tool_call_record(raw_record)
+        record = _normalize_tool_call_record(raw_record)
         call_id = record.get("call_id")
         cloned = dict(record)
         cloned["permission"] = dict(record.get("permission") or {})
@@ -114,11 +113,8 @@ def _can_apply_permission_decision(record: dict[str, Any], decision: dict[str, A
 
 def _extract_reject_reason(decision: dict[str, Any]) -> str:
     """Read the caller-provided reason for rejecting a Tool call."""
-    for key in ("reject_reason", "denied_reason", "deny_reason", "reason"):
-        value = decision.get(key)
-        if value is not None and str(value).strip():
-            return str(value).strip()
-    return ""
+    value = decision.get("reject_reason")
+    return str(value).strip() if value is not None and str(value).strip() else ""
 
 
 def _is_approved(value: Any) -> bool:
@@ -144,7 +140,7 @@ def split_executable_tool_calls(
     executable_calls: list[dict[str, Any]] = []
     pending_or_final_calls: list[dict[str, Any]] = []
     for raw_record in tool_calls:
-        record = normalize_tool_call_record(raw_record)
+        record = _normalize_tool_call_record(raw_record)
         status = record.get("execution", {}).get("status")
         if status == "ready":
             executable_calls.append(record)
@@ -286,3 +282,23 @@ def _build_extra_confirmation(definition: ToolDefinition) -> dict[str, Any]:
             ),
         }
     }
+
+
+def _normalize_tool_call_draft(draft: dict[str, Any]) -> dict[str, Any]:
+    if "skill_id" in draft:
+        raise ValueError("tool_call_drafts 不支持字段 skill_id")
+    normalized = dict(draft)
+    normalized["params"] = dict(normalized.get("params") or {})
+    return normalized
+
+
+def _normalize_tool_call_record(record: dict[str, Any]) -> dict[str, Any]:
+    forbidden = {"skill_id", "skill_name"} & set(record)
+    if forbidden:
+        raise ValueError(f"ToolCallRecord 不支持字段: {', '.join(sorted(forbidden))}")
+    normalized = dict(record)
+    normalized["params"] = dict(normalized.get("params") or {})
+    normalized["permission"] = dict(normalized.get("permission") or {})
+    normalized["execution"] = dict(normalized.get("execution") or {})
+    normalized["definition"] = dict(normalized.get("definition") or {})
+    return normalized

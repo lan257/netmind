@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .registry_utils import is_relative_to, load_yaml_like
-from .schemas import SkillDefinition, ToolDefinition
+from .schemas import ToolDefinition
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -32,15 +32,12 @@ def load_tool_definitions(domain: str, tool_root: Path | None = None) -> list[To
     bindings = load_domain_bindings(root)
     list_path = root / bindings.get(domain, bindings["default"])
     payload = load_yaml_like(list_path)
+    if "tools" not in payload:
+        raise ValueError(f"Tool 列表必须使用 tools 顶层字段: {list_path}")
     definitions = [ToolDefinition.from_dict(item) for item in payload.get("tools", [])]
     for definition in definitions:
         _validate_tool_definition_path(root, definition)
     return definitions
-
-
-def load_skill_definitions(domain: str, tool_root: Path | None = None) -> list[SkillDefinition]:
-    """Compatibility wrapper for legacy callers that still use Skill naming."""
-    return load_tool_definitions(domain, tool_root)
 
 
 def summarize_tools(tool_definitions: list[ToolDefinition]) -> list[dict[str, Any]]:
@@ -57,11 +54,6 @@ def summarize_tools(tool_definitions: list[ToolDefinition]) -> list[dict[str, An
         }
         for item in tool_definitions
     ]
-
-
-def summarize_skills(skill_definitions: list[SkillDefinition]) -> list[dict[str, Any]]:
-    """Compatibility wrapper for callers that have not been renamed yet."""
-    return summarize_tools(skill_definitions)
 
 
 def _validate_tool_definition_path(root: Path, definition: ToolDefinition) -> None:

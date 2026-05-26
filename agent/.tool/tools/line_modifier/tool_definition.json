@@ -1,6 +1,6 @@
 {
-  "skill_id": "line_modifier",
-  "skill_name": "精准文件行数修改",
+  "tool_id": "line_modifier",
+  "tool_name": "精准文件行数修改",
   "description": "修改指定文件的指定行范围内容；单次最多修改 40 行、写入 4000 字符。⚠️ 重要：文件必须已存在！如需创建新文件请使用 create_file。需要检查json格式是否被破坏",
   "trigger": "当需要小块、精准地修改文件特定行内容时使用；禁止用于整文件写入,如果文件不存在，请先调用 create_file。",
   "parameters": {

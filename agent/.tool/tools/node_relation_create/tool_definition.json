@@ -1,6 +1,6 @@
 {
-  "skill_id": "node_relation_create",
-  "skill_name": "创建关系",
+  "tool_id": "node_relation_create",
+  "tool_name": "创建关系",
   "description": "创建节点之间的关联",
   "trigger": "当需要创建两个节点之间的关联关系时使用",
   "params": {

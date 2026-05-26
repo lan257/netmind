@@ -1,6 +1,6 @@
 {
-  "skill_id": "create_file",
-  "skill_name": "创建文件",
+  "tool_id": "create_file",
+  "tool_name": "创建文件",
   "description": "仅在指定路径创建空文件（不写入任何内容），并自动创建父目录。创建后文件大小为0字节。",
   "trigger": "当需要创建空文件时使用。如果需要创建并写入内容，请先创建空文件。",
   "params": {

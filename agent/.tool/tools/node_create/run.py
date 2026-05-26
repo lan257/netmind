@@ -81,9 +81,9 @@ def run(params: dict[str, Any]) -> dict[str, Any]:
 
 def _read_base_url(runtime: dict[str, Any]) -> str:
     candidate = None
-    skill_runtime = runtime.get("skill")
-    if isinstance(skill_runtime, dict):
-        candidate = skill_runtime.get("netmind_api_base_url")
+    tool_runtime = runtime.get("tool")
+    if isinstance(tool_runtime, dict):
+        candidate = tool_runtime.get("netmind_api_base_url")
     if not candidate:
         shared = runtime.get("shared")
         if isinstance(shared, dict):
@@ -98,9 +98,9 @@ def _read_base_url(runtime: dict[str, Any]) -> str:
 
 
 def _read_timeout(runtime: dict[str, Any]) -> float:
-    skill_runtime = runtime.get("skill")
-    if isinstance(skill_runtime, dict) and skill_runtime.get("timeout_seconds"):
-        return float(skill_runtime["timeout_seconds"])
+    tool_runtime = runtime.get("tool")
+    if isinstance(tool_runtime, dict) and tool_runtime.get("timeout_seconds"):
+        return float(tool_runtime["timeout_seconds"])
     shared = runtime.get("shared")
     if isinstance(shared, dict) and shared.get("timeout_seconds"):
         return float(shared["timeout_seconds"])

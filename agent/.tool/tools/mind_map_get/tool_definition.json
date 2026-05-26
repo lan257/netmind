@@ -1,6 +1,6 @@
 {
-  "skill_id": "mind_map_get",
-  "skill_name": "查询单个导图",
+  "tool_id": "mind_map_get",
+  "tool_name": "查询单个导图",
   "description": "按 ID 查询单个思维导图的详细信息",
   "trigger": "当需要根据导图ID获取单个思维导图的详细信息时使用",
   "params": {

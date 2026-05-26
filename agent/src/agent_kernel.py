@@ -11,7 +11,7 @@ if __package__ in {None, ""}:
 
     sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-    from src.api_adapter import build_api_response, should_include_legacy_fields
+    from src.api_adapter import build_api_response
     from src.context_manager import ensure_task_state, load_context, save_context
     from src.llm_client import call_llm, parse_tool_call_drafts
     from src.tool_call_builder import (
@@ -27,7 +27,7 @@ if __package__ in {None, ""}:
     from src.tool_registry import load_tool_definitions
     from src.tool_runner import execute_ready_tool_calls
 else:
-    from .api_adapter import build_api_response, should_include_legacy_fields
+    from .api_adapter import build_api_response
     from .context_manager import ensure_task_state, load_context, save_context
     from .llm_client import call_llm, parse_tool_call_drafts
     from .tool_call_builder import (
@@ -48,7 +48,6 @@ def run_agent_kernel(raw_request: dict[str, Any]) -> dict[str, Any]:
     """Run one complete Agent Kernel cycle and return frontend JSON."""
     turn_id = generate_turn_id()
     request = AgentRequest.from_dict(raw_request)
-    include_legacy = should_include_legacy_fields(request.api_version)
     context = load_context(request.conversation_id, request.context)
     task_state = ensure_task_state(context, request.user_text)
     tool_definitions = load_tool_definitions(request.domain)
@@ -80,8 +79,6 @@ def run_agent_kernel(raw_request: dict[str, Any]) -> dict[str, Any]:
     if ai_response.get("error"):
         response = build_api_response(
             build_error_response(ai_response, tool_results, turn_id=turn_id),
-            include_legacy=include_legacy,
-            api_version=request.api_version,
         )
         save_context(request.conversation_id, response)
         return response
@@ -93,14 +90,12 @@ def run_agent_kernel(raw_request: dict[str, Any]) -> dict[str, Any]:
         build_frontend_response(
             ai_response,
             pending_records,
-            tool_results + current_tool_results,
+            tool_results,
             current_tool_results,
             turn_id=turn_id,
             had_tool_requests=bool(drafts),
             model_needs_continuation=bool(ai_response.get("needs_continuation")),
-        ),
-        include_legacy=include_legacy,
-        api_version=request.api_version,
+        )
     )
     save_context(request.conversation_id, response)
     return response
@@ -116,9 +111,14 @@ def build_frontend_response(
     model_needs_continuation: bool = False,
 ) -> dict[str, Any]:
     """Build the unified JSON output expected by frontend/backend."""
-    all_tool_calls = tool_results + tool_calls
+    status_tool_calls = tool_results + (current_tool_results or []) + tool_calls
+    response_tool_calls = _build_response_tool_calls(
+        previous_tool_results=tool_results,
+        current_tool_results=current_tool_results or [],
+        pending_tool_calls=tool_calls,
+    )
     status = calculate_turn_status(
-        all_tool_calls,
+        status_tool_calls,
         current_tool_results=current_tool_results or [],
         had_tool_requests=had_tool_requests,
         model_needs_continuation=model_needs_continuation,
@@ -128,7 +128,7 @@ def build_frontend_response(
         "status": status,
         "agent_target": ai_response.get("agent_target", ""),
         "main_text": ai_response.get("main_text", ""),
-        "tool_calls": all_tool_calls,
+        "tool_calls": response_tool_calls,
         "context_update": ai_response.get("context_update", {"working_memory": {}, "summary": ""}),
     }
 
@@ -163,10 +163,54 @@ def build_error_response(
         "status": "error",
         "agent_target": ai_response.get("agent_target", "大模型调用失败"),
         "main_text": ai_response.get("main_text", ai_response.get("error", "")),
-        "tool_calls": tool_results,
+        "tool_calls": _active_history_tool_calls(tool_results),
         "context_update": ai_response.get("context_update", {"working_memory": {}, "summary": ""}),
         "error": ai_response.get("error", ""),
     }
+
+
+def _build_response_tool_calls(
+    previous_tool_results: list[dict[str, Any]],
+    current_tool_results: list[dict[str, Any]],
+    pending_tool_calls: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Return only Tool records the caller must carry into the next kernel turn."""
+    return _dedupe_tool_calls(
+        _active_history_tool_calls(previous_tool_results)
+        + current_tool_results
+        + pending_tool_calls
+    )
+
+
+def _active_history_tool_calls(tool_calls: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep unresolved historical Tool calls, but drop results already shown to the model."""
+    return [
+        item
+        for item in tool_calls
+        if _tool_execution_status(item) in {"waiting_permission", "ready", "running"}
+    ]
+
+
+def _tool_execution_status(tool_call: dict[str, Any]) -> str:
+    """Read a ToolCallRecord execution status defensively."""
+    execution = tool_call.get("execution")
+    if not isinstance(execution, dict):
+        return ""
+    return str(execution.get("status") or "")
+
+
+def _dedupe_tool_calls(tool_calls: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Preserve order while avoiding duplicate ToolCallRecords in continuation state."""
+    seen: set[str] = set()
+    deduped: list[dict[str, Any]] = []
+    for item in tool_calls:
+        call_id = str(item.get("call_id") or "")
+        if call_id and call_id in seen:
+            continue
+        if call_id:
+            seen.add(call_id)
+        deduped.append(item)
+    return deduped
 
 
 def main() -> None:

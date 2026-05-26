@@ -68,16 +68,16 @@ def _read_base_url(params: dict[str, Any], runtime: dict[str, Any]) -> str:
     if not candidate:
         raise ValueError(
             "Missing NetMind API base URL. Provide "
-            "skill_runtime.netmind_api_base_url, skill_runtime.shared.netmind_api_base_url, "
+            "tool_runtime.netmind_api_base_url, tool_runtime.shared.netmind_api_base_url, "
             "or NETMIND_API_BASE_URL."
         )
     return _normalize_base_url(candidate)
 
 
 def _runtime_value(runtime: dict[str, Any], key: str) -> Any:
-    skill_runtime = runtime.get("skill")
-    if isinstance(skill_runtime, dict) and skill_runtime.get(key) is not None:
-        return skill_runtime.get(key)
+    tool_runtime = runtime.get("tool")
+    if isinstance(tool_runtime, dict) and tool_runtime.get(key) is not None:
+        return tool_runtime.get(key)
     shared_runtime = runtime.get("shared")
     if isinstance(shared_runtime, dict) and shared_runtime.get(key) is not None:
         return shared_runtime.get(key)

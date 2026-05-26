@@ -1,6 +1,6 @@
 {
-  "skill_id": "query_current_time",
-  "skill_name": "查询当前时间",
+  "tool_id": "query_current_time",
+  "tool_name": "查询当前时间",
   "description": "查询当前系统时间，返回年月日时分秒的详细信息",
   "trigger": "当需要查询当前时间、日期或时间戳时使用",
   "params": {},

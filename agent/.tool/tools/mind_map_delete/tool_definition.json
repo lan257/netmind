@@ -1,6 +1,6 @@
 {
-  "skill_id": "mind_map_delete",
-  "skill_name": "删除导图",
+  "tool_id": "mind_map_delete",
+  "tool_name": "删除导图",
   "description": "删除单个思维导图，不级联删除关联节点",
   "trigger": "当需要删除一个思维导图且不删除其节点时使用",
   "params": {

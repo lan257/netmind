@@ -1,6 +1,6 @@
 {
-  "skill_id": "node_relation_list_by_node",
-  "skill_name": "查询节点相关关系",
+  "tool_id": "node_relation_list_by_node",
+  "tool_name": "查询节点相关关系",
   "description": "查询与某节点相关的所有关系",
   "trigger": "当需要查询某个节点相关的所有关系时使用",
   "params": {

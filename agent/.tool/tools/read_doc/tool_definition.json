@@ -1,6 +1,6 @@
 {
-  "skill_id": "read_doc",
-  "skill_name": "文件读取",
+  "tool_id": "read_doc",
+  "tool_name": "文件读取",
   "description": "读取指定文件内容",
   "trigger": "当需要读取文件内容时使用",
   "params": {

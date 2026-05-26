@@ -1,6 +1,6 @@
 {
-  "skill_id": "mind_map_list",
-  "skill_name": "查询导图列表",
+  "tool_id": "mind_map_list",
+  "tool_name": "查询导图列表",
   "description": "查询全部思维导图列表",
   "trigger": "当需要获取所有思维导图的列表信息时使用",
   "params": {},

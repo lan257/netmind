@@ -1,6 +1,6 @@
 {
-  "skill_id": "node_by_map",
-  "skill_name": "查询导图下节点",
+  "tool_id": "node_by_map",
+  "tool_name": "查询导图下节点",
   "description": "根据导图 ID 查询该导图下的所有节点",
   "trigger": "当需要获取某个思维导图的所有节点时使用",
   "params": {

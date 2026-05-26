@@ -9,14 +9,13 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from .compat import normalize_tool_call_record
 from .json_utils import make_json_safe
 from .registry_utils import is_relative_to
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TOOL_SCRIPTS_ROOT = PROJECT_ROOT / ".tool" / "tools"
-RUNTIME_RESERVED_KEYS = {"shared", "tools", "by_tool", "skills", "by_skill"}
+RUNTIME_RESERVED_KEYS = {"shared", "tools", "by_tool"}
 DEFAULT_TOOL_TIMEOUT_SECONDS = 30.0
 SENSITIVE_KEY_PARTS = ("api_key", "apikey", "authorization", "cookie", "password", "secret", "token")
 
@@ -28,7 +27,7 @@ def execute_ready_tool_calls(
     """Execute approved Tool calls and return updated records."""
     executed_records: list[dict[str, Any]] = []
     for raw_record in tool_calls:
-        record = normalize_tool_call_record(raw_record)
+        record = _normalize_tool_call_record(raw_record)
         cloned = dict(record)
         cloned["execution"] = dict(record.get("execution") or {})
         if cloned["execution"].get("status") != "ready":
@@ -141,11 +140,6 @@ def _run_tool_script(record: dict[str, Any], tool_runtime: dict[str, Any]) -> tu
 def _resolve_script_path(script_path: str) -> Path:
     """Resolve Tool script paths and require the final file to live under `.tool/tools`."""
     candidate = (PROJECT_ROOT / script_path).resolve()
-    if script_path.startswith(".skill/skills/") or script_path.startswith(".skill\\skills\\"):
-        migrated = script_path.replace(".skill/skills/", ".tool/tools/").replace(".skill\\skills\\", ".tool\\tools\\")
-        migrated_candidate = (PROJECT_ROOT / migrated).resolve()
-        if migrated_candidate.exists():
-            candidate = migrated_candidate
     if not candidate.exists():
         raise FileNotFoundError(f"Tool 脚本不存在: {script_path}")
     if not candidate.is_file():
@@ -170,10 +164,6 @@ def _build_runtime_for_tool(tool_runtime: dict[str, Any], tool_id: str) -> dict[
     tool_runtime_map = tool_runtime.get("tools")
     if not isinstance(tool_runtime_map, dict):
         tool_runtime_map = tool_runtime.get("by_tool")
-    if not isinstance(tool_runtime_map, dict):
-        tool_runtime_map = tool_runtime.get("skills")
-    if not isinstance(tool_runtime_map, dict):
-        tool_runtime_map = tool_runtime.get("by_skill")
     tool_specific = {}
     if isinstance(tool_runtime_map, dict):
         raw_tool_runtime = tool_runtime_map.get(tool_id)
@@ -182,10 +172,8 @@ def _build_runtime_for_tool(tool_runtime: dict[str, Any], tool_id: str) -> dict[
 
     return {
         "tool_id": tool_id,
-        "skill_id": tool_id,
         "shared": shared_runtime,
         "tool": tool_specific,
-        "skill": tool_specific,
     }
 
 
@@ -212,10 +200,21 @@ def _build_failure_diagnostics(record: dict[str, Any], error_type: str, error: s
         "error_type": error_type,
         "error": _redact_text(error),
         "failed_tool_id": tool_id,
-        "failed_skill_id": tool_id,
         "failed_params": _redact_sensitive_value(dict(record.get("params") or {})),
         "retry_guidance": "下一轮不要原样重复同一个 tool_id 和 params；先根据错误修正参数，或改用搜索/目录/读取类 Tool 定位信息。",
     }
+
+
+def _normalize_tool_call_record(record: dict[str, Any]) -> dict[str, Any]:
+    forbidden = {"skill_id", "skill_name"} & set(record)
+    if forbidden:
+        raise ValueError(f"ToolCallRecord 不支持字段: {', '.join(sorted(forbidden))}")
+    normalized = dict(record)
+    normalized["params"] = dict(normalized.get("params") or {})
+    normalized["permission"] = dict(normalized.get("permission") or {})
+    normalized["execution"] = dict(normalized.get("execution") or {})
+    normalized["definition"] = dict(normalized.get("definition") or {})
+    return normalized
 
 
 def _format_params_for_log(params: dict[str, Any]) -> str:

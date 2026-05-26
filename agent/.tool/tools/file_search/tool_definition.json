@@ -1,6 +1,6 @@
 {
-  "skill_id": "file_search",
-  "skill_name": "文件查找",
+  "tool_id": "file_search",
+  "tool_name": "文件查找",
   "description": "在指定目录中搜索文件名匹配模式的文件（不能查询文件夹，若查询失败可以使用tree_reader skill）。pattern参数支持通配符格式：*（匹配任意多个字符）、?（匹配单个字符）、[abc]（匹配字符集合中的任意一个）。例如：*.json匹配所有JSON文件，data_?.csv匹配data_1.csv、data_a.csv等。",
   "trigger": "当需要查找文件、搜索文件名时使用",
   "params": {

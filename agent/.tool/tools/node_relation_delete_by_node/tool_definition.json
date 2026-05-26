@@ -1,6 +1,6 @@
 {
-  "skill_id": "node_relation_delete_by_node",
-  "skill_name": "删除节点相关关系",
+  "tool_id": "node_relation_delete_by_node",
+  "tool_name": "删除节点相关关系",
   "description": "删除某节点相关的所有关系",
   "trigger": "当需要删除某个节点相关的所有关联关系时使用",
   "params": {
